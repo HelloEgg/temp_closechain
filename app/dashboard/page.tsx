@@ -90,11 +90,12 @@ function SubcontractorAggregateView({ projects }: { projects: Project[] }) {
     if (!allSubs) return []
     const map: Record<string, AggregatedSub> = {}
     for (const sub of allSubs) {
+      if (!sub.company_name) continue
       const key = sub.company_name.toLowerCase()
       if (!map[key]) {
         map[key] = { company_name: sub.company_name, csi_division: sub.csi_division ?? '', csi_code: sub.csi_code ?? '', projects: [], total_ps: 0, approved_ps: 0 }
       }
-      map[key].projects.push({ id: sub.project_id, name: sub.project_name })
+      map[key].projects.push({ id: sub.project_id ?? '', name: sub.project_name ?? '' })
       map[key].total_ps += 1
       if (sub.status === 'approved') map[key].approved_ps += 1
     }
