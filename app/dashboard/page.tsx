@@ -23,8 +23,8 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<"projects" | "subcontractors">("projects");
 
   const totalProjects = projects.length;
-  const notPublishedProjects = projects.filter((p) => !p.clientPortalToken).length;
-  const publishedProjects = projects.filter((p) => !!p.clientPortalToken).length;
+  const activeProjects = projects.filter((p) => p.status === "active").length;
+  const publishedProjects = projects.filter((p) => p.status === "approved").length;
 
   const metrics = [
     {
@@ -35,8 +35,8 @@ export default function DashboardPage() {
       icon: FolderKanban,
     },
     {
-      label: "Not Published",
-      value: notPublishedProjects,
+      label: "In Progress",
+      value: activeProjects,
       colorText: "text-amber-700",
       colorBg: "bg-amber-50",
       icon: FolderKanban,
@@ -138,7 +138,9 @@ function ProjectsGridView({
         <div className="mx-auto w-16 h-16 bg-secondary rounded-full flex items-center justify-center mb-4">
           <Building2 className="w-8 h-8 text-muted-foreground" />
         </div>
-        <h3 className="text-xl font-display font-semibold text-foreground mb-2">No projects yet</h3>
+        <h3 className="text-xl font-display font-semibold text-foreground mb-2">
+          No projects yet
+        </h3>
         <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm">
           Get started by creating your first construction project to manage its closeout package.
         </p>
@@ -185,7 +187,7 @@ function ProjectCard({ project }: { project: ProjectDetail }) {
           <StatusBadge status={project.status} />
         </div>
 
-        <h3 className="text-xl font-display font-bold text-foreground mb-1 group-hover:text-primary transition-colors pr-14">
+        <h3 className="text-xl font-display font-bold text-foreground mb-1 group-hover:text-primary transition-colors pr-14 text-pretty">
           {project.name}
         </h3>
 
@@ -373,10 +375,7 @@ function SubcontractorAggregateView({ projects }: { projects: ProjectDetail[] })
             })}
             {filtered.length === 0 && (
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-6 py-14 text-center text-muted-foreground text-sm"
-                >
+                <td colSpan={5} className="px-6 py-14 text-center text-muted-foreground text-sm">
                   No subcontractors found matching your search.
                 </td>
               </tr>

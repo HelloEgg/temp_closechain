@@ -48,7 +48,7 @@ function ManagerAIPanel() {
       {
         role: "assistant",
         content:
-          "Based on the current project data: Downtown Office Renovation is at 43% — Pacific HVAC is missing Controls Sequences and Warranty. Harbor View Condominiums is at 21% — FlowRite Plumbing has only submitted 1 of 7 required documents. Westside Medical Center is 100% complete and published.",
+          "Based on your projects: Downtown Office Renovation is at 43% — Pacific HVAC is missing Controls Sequences and Warranty. Harbor View Condominiums is at 21% — FlowRite Plumbing has only submitted 1 of 7 required documents. Westside Medical Center is 100% complete and published.",
       },
     ]);
     setIsLoading(false);
@@ -154,6 +154,7 @@ function ManagerAIPanel() {
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
                 className="p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition-colors flex-shrink-0"
+                aria-label="Send message"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>
@@ -203,7 +204,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static",
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:flex"
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Logo */}
@@ -222,7 +223,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <nav className="px-3 py-4 space-y-0.5">
           {navItems.map((item) => {
             const isActive =
-              pathname === item.href || pathname?.startsWith(item.href + "/");
+              pathname === item.href || (pathname?.startsWith(item.href + "/") ?? false);
             return (
               <Link
                 key={item.href}
@@ -236,10 +237,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 )}
               >
                 <item.icon
-                  className={cn(
-                    "w-5 h-5",
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  )}
+                  className={cn("w-5 h-5", isActive ? "text-primary" : "text-muted-foreground")}
                 />
                 {item.label}
               </Link>
@@ -255,13 +253,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {/* User Footer */}
         <div className="p-4 border-t border-border">
           <div className="flex items-center gap-3 px-1 py-1 mb-3">
-            <Image
-              src="https://api.dicebear.com/7.x/initials/svg?seed=JS&backgroundColor=1e3a5f&textColor=ffffff"
-              alt="John Smith"
-              width={36}
-              height={36}
-              className="w-9 h-9 rounded-full border-2 border-border"
-            />
+            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+              <span className="text-xs font-bold text-primary-foreground">JS</span>
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground truncate">John Smith</p>
               <p className="text-xs text-muted-foreground truncate">john@smithgc.com</p>
@@ -278,7 +272,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-w-0 overflow-auto bg-slate-50/60">
+      <main className="flex-1 min-w-0 overflow-auto" style={{ background: "hsl(210 20% 97%)" }}>
         <div className="p-4 md:p-8 max-w-7xl mx-auto">{children}</div>
       </main>
     </div>

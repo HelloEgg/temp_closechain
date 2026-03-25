@@ -36,7 +36,7 @@ export default function LoginPage() {
           <div className="mt-10 space-y-4">
             <Link
               href="/dashboard"
-              className="w-full flex items-center justify-between px-6 py-4 rounded-2xl text-sm font-semibold text-primary-foreground bg-primary shadow-lg shadow-primary/20 hover:bg-primary/90 hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2"
+              className="w-full flex items-center justify-between px-6 py-4 rounded-2xl text-sm font-semibold text-primary-foreground bg-primary shadow-lg hover:bg-primary/90 hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2"
             >
               Continue with Replit
               <ArrowRight className="w-5 h-5" />
@@ -70,7 +70,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right panel – decorative */}
-      <div className="hidden lg:flex flex-1 relative bg-primary overflow-hidden">
+      <div className="hidden lg:flex flex-1 relative overflow-hidden" style={{ background: "hsl(220 50% 20%)" }}>
         {/* Grid pattern */}
         <div
           className="absolute inset-0 opacity-10"
@@ -100,11 +100,15 @@ export default function LoginPage() {
               AI Assistant
             </p>
             <p className="text-white text-sm leading-relaxed">
-              Pacific HVAC is missing Controls Sequences and Warranty Certificate. I recommend sending a reminder.
+              Pacific HVAC is missing Controls Sequences and Warranty Certificate. I recommend
+              sending a reminder this week.
             </p>
           </div>
 
-          <div className="bg-emerald-500/30 backdrop-blur-sm border border-emerald-300/30 rounded-2xl p-5 max-w-xs ml-auto">
+          <div
+            className="backdrop-blur-sm border rounded-2xl p-5 max-w-xs ml-auto"
+            style={{ background: "rgba(16,185,129,0.2)", borderColor: "rgba(52,211,153,0.3)" }}
+          >
             <p className="text-emerald-200 text-xs font-semibold uppercase tracking-wide mb-2">
               Westside Medical Center
             </p>

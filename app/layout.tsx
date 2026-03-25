@@ -17,7 +17,7 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "Closechain AI — Construction Closeout Management",
   description:
-    "Stop Searching. Just Ask. AI-powered construction closeout package management for general contractors.",
+    "AI-powered construction closeout package management for general contractors. Stop searching, just ask.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
