@@ -18,6 +18,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "scripts", "artifacts", "lib/db", "lib/api-client-react", "lib/api-zod", "lib/replit-auth-web", "lib/object-storage-web", "lib/integrations-openai-ai-server", "lib/integrations-openai-ai-react"]
+  "include": ["next-env.d.ts", "app/**/*.ts", "app/**/*.tsx", "components/**/*.ts", "components/**/*.tsx", "lib/**/*.ts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", "artifacts"]
 }
