@@ -166,7 +166,7 @@ function ManagerAIPanel() {
   );
 }
 
-export function AppLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 

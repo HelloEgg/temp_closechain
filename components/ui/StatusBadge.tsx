@@ -19,7 +19,7 @@ const labelMap: Record<Status, string> = {
   archived: "Archived",
 };
 
-export function StatusBadge({
+export default function StatusBadge({
   status,
   label,
   showIcon = true,
