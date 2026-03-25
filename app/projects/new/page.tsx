@@ -1,429 +1,340 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  ChevronRight,
-  ChevronLeft,
-  Building2,
-  HardHat,
-  Trash2,
-  Plus,
-  Check,
-  AlertCircle,
-} from "lucide-react";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { CSI_DIVISIONS, type CsiDivision } from "@/lib/mock-data";
-import { cn } from "@/lib/utils";
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { ChevronRight, ChevronLeft, Building2, HardHat, Trash2, Plus, Check, AlertCircle } from 'lucide-react'
+import AppLayout from '@/components/layout/AppLayout'
+import { cn } from '@/lib/utils'
 
-interface SubcontractorEntry {
-  vendorName: string;
-  vendorCode: string;
-  csiCode: string;
-  csiDivision: string;
+interface SubEntry {
+  company_name: string
+  contact_name: string
+  email: string
+  phone: string
+  csi_division: string
+  csi_code: string
 }
 
-const STEPS = ["Project Details", "Add Subcontractors", "Review & Create"];
+const CSI_DIVISIONS = [
+  { code: '01 00 00', label: 'Division 01 - General Requirements' },
+  { code: '02 00 00', label: 'Division 02 - Existing Conditions' },
+  { code: '03 00 00', label: 'Division 03 - Concrete' },
+  { code: '04 00 00', label: 'Division 04 - Masonry' },
+  { code: '05 00 00', label: 'Division 05 - Metals' },
+  { code: '06 00 00', label: 'Division 06 - Wood & Plastics' },
+  { code: '07 00 00', label: 'Division 07 - Thermal & Moisture' },
+  { code: '08 00 00', label: 'Division 08 - Openings' },
+  { code: '09 00 00', label: 'Division 09 - Finishes' },
+  { code: '10 00 00', label: 'Division 10 - Specialties' },
+  { code: '11 00 00', label: 'Division 11 - Equipment' },
+  { code: '12 00 00', label: 'Division 12 - Furnishings' },
+  { code: '21 00 00', label: 'Division 21 - Fire Suppression' },
+  { code: '22 00 00', label: 'Division 22 - Plumbing' },
+  { code: '23 00 00', label: 'Division 23 - HVAC' },
+  { code: '26 00 00', label: 'Division 26 - Electrical' },
+  { code: '27 00 00', label: 'Division 27 - Communications' },
+  { code: '28 00 00', label: 'Division 28 - Electronic Safety' },
+]
+
+const DEFAULT_DOCS = ['O&M Manual', 'Warranty Letter', 'As-Built Drawings', 'Final Inspection Report']
+
+const STEPS = ['Project Details', 'Add Subcontractors', 'Review & Create']
+
+const inputClass = 'w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors'
+const labelClass = 'block text-sm font-medium text-foreground mb-1.5'
 
 export default function NewProjectPage() {
-  const router = useRouter();
-  const [step, setStep] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+  const [step, setStep] = useState(0)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Step 0
-  const [name, setName] = useState("");
-  const [jobNumber, setJobNumber] = useState("");
-  const [description, setDescription] = useState("");
-  const [clientName, setClientName] = useState("");
-  const [address, setAddress] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [name, setName] = useState('')
+  const [address, setAddress] = useState('')
+  const [city, setCity] = useState('')
+  const [state, setState] = useState('')
+  const [zip, setZip] = useState('')
+  const [ownerName, setOwnerName] = useState('')
+  const [ownerEmail, setOwnerEmail] = useState('')
+  const [contractValue, setContractValue] = useState('')
+  const [completionDate, setCompletionDate] = useState('')
 
   // Step 1
-  const [subcontractors, setSubcontractors] = useState<SubcontractorEntry[]>([
-    { vendorName: "", vendorCode: "", csiCode: "", csiDivision: "" },
-  ]);
-  const [subErrors, setSubErrors] = useState<string[]>([]);
+  const [subs, setSubs] = useState<SubEntry[]>([
+    { company_name: '', contact_name: '', email: '', phone: '', csi_division: '', csi_code: '' },
+  ])
+  const [subErrors, setSubErrors] = useState<string[]>([])
 
-  const canGoNextStep1 = name.trim().length > 0;
+  const canGoNext0 = name.trim() && address.trim() && city.trim() && state.trim() && ownerName.trim() && ownerEmail.trim()
 
-  const validateSubs = (): string[] => {
-    const errors: string[] = [];
-    for (const sub of subcontractors) {
-      if (!sub.vendorName.trim() || !sub.csiCode.trim()) {
-        errors.push("All subcontractors must have a vendor name and CSI division.");
-        break;
+  const validateSubs = () => {
+    const errs: string[] = []
+    for (const sub of subs) {
+      if (!sub.company_name.trim() || !sub.csi_code.trim()) {
+        errs.push('All subcontractors must have a company name and CSI division.')
+        break
       }
     }
-    return errors;
-  };
+    return errs
+  }
 
   const handleNext = () => {
-    if (step === 0 && !canGoNextStep1) return;
     if (step === 1) {
-      const errs = validateSubs();
-      if (errs.length > 0) {
-        setSubErrors(errs);
-        return;
-      }
-      setSubErrors([]);
+      const errs = validateSubs()
+      if (errs.length > 0) { setSubErrors(errs); return }
+      setSubErrors([])
     }
-    setStep((s) => Math.min(s + 1, 2));
-  };
+    setStep(s => Math.min(s + 1, 2))
+  }
 
-  const handleBack = () => setStep((s) => Math.max(s - 1, 0));
-
-  const addSub = () =>
-    setSubcontractors((prev) => [
-      ...prev,
-      { vendorName: "", vendorCode: "", csiCode: "", csiDivision: "" },
-    ]);
-
-  const removeSub = (i: number) =>
-    setSubcontractors((prev) => prev.filter((_, idx) => idx !== i));
-
-  const updateSub = (i: number, field: keyof SubcontractorEntry, value: string) => {
-    setSubcontractors((prev) =>
-      prev.map((s, idx) => {
-        if (idx !== i) return s;
-        if (field === "csiCode") {
-          const division = CSI_DIVISIONS.find((d) => d.code === value);
-          return { ...s, csiCode: value, csiDivision: division?.name ?? "" };
-        }
-        return { ...s, [field]: value };
-      })
-    );
-  };
+  const addSub = () => setSubs(prev => [...prev, { company_name: '', contact_name: '', email: '', phone: '', csi_division: '', csi_code: '' }])
+  const removeSub = (i: number) => setSubs(prev => prev.filter((_, idx) => idx !== i))
+  const updateSub = (i: number, field: keyof SubEntry, value: string) => {
+    setSubs(prev => prev.map((s, idx) => idx === i ? { ...s, [field]: value } : s))
+  }
 
   const handleSubmit = async () => {
-    setIsSubmitting(true);
-    setError(null);
-    await new Promise((r) => setTimeout(r, 1000));
-    router.push("/dashboard");
-  };
+    setIsSubmitting(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name, address, city, state, zip,
+          owner_name: ownerName,
+          owner_email: ownerEmail,
+          contract_value: parseFloat(contractValue) || 0,
+          substantial_completion_date: completionDate || null,
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to create project')
+      const project = await res.json()
+
+      // Add each subcontractor
+      for (const sub of subs) {
+        if (!sub.company_name.trim()) continue
+        await fetch(`/api/projects/${project.id}/subcontractors`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...sub, required_docs: DEFAULT_DOCS }),
+        })
+      }
+
+      router.push(`/projects/${project.id}`)
+    } catch (err) {
+      setError('Something went wrong. Please try again.')
+      setIsSubmitting(false)
+    }
+  }
 
   return (
     <AppLayout>
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-2xl mx-auto flex flex-col gap-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold text-foreground">Create New Project</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Set up your closeout package by defining the project and its subcontractors.
-          </p>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground font-sans">Create New Project</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">Set up a new construction closeout package</p>
         </div>
 
-        {/* Stepper */}
-        <div className="flex items-center mb-10">
+        {/* Steps */}
+        <div className="flex items-center gap-0">
           {STEPS.map((label, i) => (
             <div key={i} className="flex items-center flex-1 last:flex-none">
-              <button
-                onClick={() => i < step && setStep(i)}
-                disabled={i > step}
-                className="flex items-center gap-3 group disabled:cursor-default"
-              >
-                <div
-                  className={cn(
-                    "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all",
-                    i < step
-                      ? "bg-emerald-500 text-white"
-                      : i === step
-                      ? "bg-primary text-white shadow-md shadow-primary/30"
-                      : "bg-secondary text-muted-foreground"
-                  )}
-                >
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors', i < step ? 'bg-primary text-primary-foreground' : i === step ? 'bg-primary text-primary-foreground ring-4 ring-primary/20' : 'bg-secondary text-muted-foreground')}>
                   {i < step ? <Check className="w-4 h-4" /> : i + 1}
                 </div>
-                <span
-                  className={cn(
-                    "text-sm font-semibold hidden sm:block",
-                    i === step
-                      ? "text-foreground"
-                      : i < step
-                      ? "text-emerald-600 cursor-pointer"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  {label}
-                </span>
-              </button>
-              {i < STEPS.length - 1 && (
-                <div
-                  className={cn(
-                    "flex-1 h-0.5 mx-4 rounded-full transition-all",
-                    i < step ? "bg-emerald-300" : "bg-border"
-                  )}
-                />
-              )}
+                <span className={cn('text-sm font-medium hidden sm:block', i === step ? 'text-foreground' : 'text-muted-foreground')}>{label}</span>
+              </div>
+              {i < STEPS.length - 1 && <div className={cn('flex-1 h-px mx-3', i < step ? 'bg-primary' : 'bg-border')} />}
             </div>
           ))}
         </div>
 
-        {/* Error Banner */}
-        {error && (
-          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-3 text-destructive text-sm">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            {error}
-          </div>
-        )}
-
-        {/* Step 0: Project Details */}
-        {step === 0 && (
-          <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-            <div className="flex items-center gap-3 mb-7">
-              <div className="p-2.5 bg-primary/10 rounded-xl">
-                <Building2 className="w-5 h-5 text-primary" />
-              </div>
-              <h2 className="text-xl font-display font-bold text-foreground">Project Details</h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-semibold text-foreground mb-1.5">
-                  Project Name <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Downtown Office Renovation"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background shadow-sm text-sm"
-                />
+        {/* Step Content */}
+        <div className="bg-card border border-border rounded-2xl p-6">
+          {step === 0 && (
+            <div className="flex flex-col gap-5">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="p-2 bg-primary/10 rounded-xl"><Building2 className="w-5 h-5 text-primary" /></div>
+                <h2 className="text-lg font-semibold text-foreground">Project Details</h2>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-1.5">
-                  Job Number
-                </label>
-                <input
-                  type="text"
-                  value={jobNumber}
-                  onChange={(e) => setJobNumber(e.target.value)}
-                  placeholder="e.g. JOB-2026-001"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background shadow-sm text-sm"
-                />
+                <label className={labelClass}>Project Name *</label>
+                <input className={inputClass} placeholder="e.g. Downtown Office Renovation" value={name} onChange={e => setName(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-1.5">
-                  Client Name
-                </label>
-                <input
-                  type="text"
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                  placeholder="e.g. Acme Corp"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background shadow-sm text-sm"
-                />
+                <label className={labelClass}>Street Address *</label>
+                <input className={inputClass} placeholder="123 Main St" value={address} onChange={e => setAddress(e.target.value)} />
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-1.5">
-                  Project Address
-                </label>
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="e.g. 123 Main St, San Francisco, CA"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background shadow-sm text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-1.5">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background shadow-sm text-sm"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-semibold text-foreground mb-1.5">
-                  Description
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Brief project scope description..."
-                  rows={3}
-                  className="w-full px-4 py-2.5 rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background shadow-sm resize-none text-sm"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 1: Subcontractors */}
-        {step === 1 && (
-          <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-            <div className="flex items-center justify-between mb-7">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-primary/10 rounded-xl">
-                  <HardHat className="w-5 h-5 text-primary" />
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <label className={labelClass}>City *</label>
+                  <input className={inputClass} placeholder="Austin" value={city} onChange={e => setCity(e.target.value)} />
                 </div>
-                <h2 className="text-xl font-display font-bold text-foreground">
-                  Subcontractors
-                </h2>
-              </div>
-              <button
-                onClick={addSub}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary/30 text-primary text-sm font-semibold hover:bg-primary/10 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Add Another
-              </button>
-            </div>
-            {subErrors.length > 0 && (
-              <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-3 text-destructive text-sm">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                {subErrors[0]}
-              </div>
-            )}
-            <div className="space-y-5">
-              {subcontractors.map((sub, i) => (
-                <SubcontractorRow
-                  key={i}
-                  index={i}
-                  sub={sub}
-                  onUpdate={updateSub}
-                  onRemove={() => removeSub(i)}
-                  canRemove={subcontractors.length > 1}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Review */}
-        {step === 2 && (
-          <div className="space-y-6">
-            <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2.5 bg-primary/10 rounded-xl">
-                  <Building2 className="w-5 h-5 text-primary" />
-                </div>
-                <h2 className="text-xl font-display font-bold text-foreground">
-                  Project Details
-                </h2>
-              </div>
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5 text-sm">
                 <div>
-                  <dt className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
-                    Project Name
-                  </dt>
-                  <dd className="font-semibold text-foreground mt-1">{name}</dd>
+                  <label className={labelClass}>State *</label>
+                  <input className={inputClass} placeholder="TX" maxLength={2} value={state} onChange={e => setState(e.target.value.toUpperCase())} />
                 </div>
-                {jobNumber && (
-                  <div>
-                    <dt className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
-                      Job Number
-                    </dt>
-                    <dd className="font-semibold text-foreground mt-1">{jobNumber}</dd>
-                  </div>
-                )}
-                {clientName && (
-                  <div>
-                    <dt className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
-                      Client
-                    </dt>
-                    <dd className="font-semibold text-foreground mt-1">{clientName}</dd>
-                  </div>
-                )}
-                {endDate && (
-                  <div>
-                    <dt className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
-                      End Date
-                    </dt>
-                    <dd className="font-semibold text-foreground mt-1">{endDate}</dd>
-                  </div>
-                )}
-                {address && (
-                  <div className="sm:col-span-2">
-                    <dt className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
-                      Address
-                    </dt>
-                    <dd className="font-semibold text-foreground mt-1">{address}</dd>
-                  </div>
-                )}
-                {description && (
-                  <div className="sm:col-span-2">
-                    <dt className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
-                      Description
-                    </dt>
-                    <dd className="font-semibold text-foreground mt-1">{description}</dd>
-                  </div>
-                )}
-              </dl>
-            </div>
-
-            <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2.5 bg-primary/10 rounded-xl">
-                  <HardHat className="w-5 h-5 text-primary" />
-                </div>
-                <h2 className="text-xl font-display font-bold text-foreground">
-                  Subcontractors ({subcontractors.length})
-                </h2>
               </div>
-              <div className="space-y-3">
-                {subcontractors.map((sub, i) => {
-                  const div = CSI_DIVISIONS.find((d) => d.code === sub.csiCode);
-                  return (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-4 rounded-xl bg-secondary/40 border border-border"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                          <HardHat className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-foreground text-sm">{sub.vendorName}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            CSI {sub.csiCode} — {sub.csiDivision}
-                          </p>
-                        </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>ZIP Code</label>
+                  <input className={inputClass} placeholder="78701" value={zip} onChange={e => setZip(e.target.value)} />
+                </div>
+                <div>
+                  <label className={labelClass}>Contract Value</label>
+                  <input className={inputClass} type="number" placeholder="0.00" value={contractValue} onChange={e => setContractValue(e.target.value)} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Owner Name *</label>
+                  <input className={inputClass} placeholder="Jane Smith" value={ownerName} onChange={e => setOwnerName(e.target.value)} />
+                </div>
+                <div>
+                  <label className={labelClass}>Owner Email *</label>
+                  <input className={inputClass} type="email" placeholder="owner@example.com" value={ownerEmail} onChange={e => setOwnerEmail(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Substantial Completion Date</label>
+                <input className={inputClass} type="date" value={completionDate} onChange={e => setCompletionDate(e.target.value)} />
+              </div>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="flex flex-col gap-5">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-xl"><HardHat className="w-5 h-5 text-primary" /></div>
+                  <h2 className="text-lg font-semibold text-foreground">Add Subcontractors</h2>
+                </div>
+                <button onClick={addSub} className="flex items-center gap-1.5 text-sm text-primary font-medium hover:underline">
+                  <Plus className="w-4 h-4" /> Add
+                </button>
+              </div>
+              {subErrors.length > 0 && (
+                <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-xl px-4 py-3">
+                  <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-destructive">{subErrors[0]}</p>
+                </div>
+              )}
+              <div className="flex flex-col gap-4">
+                {subs.map((sub, i) => (
+                  <div key={i} className="border border-border rounded-xl p-4 flex flex-col gap-3 relative">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-semibold text-foreground">Subcontractor {i + 1}</p>
+                      {subs.length > 1 && (
+                        <button onClick={() => removeSub(i)} className="text-muted-foreground hover:text-destructive transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelClass}>Company Name *</label>
+                        <input className={inputClass} placeholder="ABC Electric" value={sub.company_name} onChange={e => updateSub(i, 'company_name', e.target.value)} />
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-foreground">
-                          {div?.requiredDocuments.length ?? 0}
-                        </p>
-                        <p className="text-xs text-muted-foreground">docs required</p>
+                      <div>
+                        <label className={labelClass}>Contact Name</label>
+                        <input className={inputClass} placeholder="John Doe" value={sub.contact_name} onChange={e => updateSub(i, 'contact_name', e.target.value)} />
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-              <div className="mt-5 pt-5 border-t border-border flex justify-between text-sm">
-                <span className="text-muted-foreground">Total documents to collect:</span>
-                <span className="font-bold text-foreground">
-                  {subcontractors.reduce((sum, sub) => {
-                    const div = CSI_DIVISIONS.find((d) => d.code === sub.csiCode);
-                    return sum + (div?.requiredDocuments.length ?? 0);
-                  }, 0)}
-                </span>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelClass}>Email</label>
+                        <input className={inputClass} type="email" placeholder="contact@example.com" value={sub.email} onChange={e => updateSub(i, 'email', e.target.value)} />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Phone</label>
+                        <input className={inputClass} placeholder="512-555-0100" value={sub.phone} onChange={e => updateSub(i, 'phone', e.target.value)} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelClass}>CSI Division *</label>
+                      <select
+                        className={inputClass}
+                        value={sub.csi_code}
+                        onChange={e => {
+                          const selected = CSI_DIVISIONS.find(d => d.code === e.target.value)
+                          updateSub(i, 'csi_code', e.target.value)
+                          updateSub(i, 'csi_division', selected?.label ?? '')
+                        }}
+                      >
+                        <option value="">Select a division...</option>
+                        {CSI_DIVISIONS.map(d => <option key={d.code} value={d.code}>{d.label}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Navigation */}
-        <div className="flex justify-between mt-8">
-          {step > 0 ? (
-            <button
-              onClick={handleBack}
-              className="flex items-center gap-2 px-5 py-2.5 border border-border text-foreground rounded-xl font-semibold text-sm hover:bg-secondary transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Back
-            </button>
-          ) : (
-            <div />
           )}
+
+          {step === 2 && (
+            <div className="flex flex-col gap-5">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="p-2 bg-primary/10 rounded-xl"><Check className="w-5 h-5 text-primary" /></div>
+                <h2 className="text-lg font-semibold text-foreground">Review & Create</h2>
+              </div>
+              <div className="flex flex-col gap-3">
+                <div className="bg-secondary/50 rounded-xl p-4 flex flex-col gap-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Project</p>
+                  <p className="font-semibold text-foreground">{name}</p>
+                  <p className="text-sm text-muted-foreground">{address}, {city}, {state} {zip}</p>
+                  <p className="text-sm text-muted-foreground">Owner: {ownerName} ({ownerEmail})</p>
+                  {contractValue && <p className="text-sm text-muted-foreground">Contract: ${parseFloat(contractValue).toLocaleString()}</p>}
+                  {completionDate && <p className="text-sm text-muted-foreground">Completion: {new Date(completionDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>}
+                </div>
+                <div className="bg-secondary/50 rounded-xl p-4 flex flex-col gap-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{subs.filter(s => s.company_name.trim()).length} Subcontractor(s)</p>
+                  {subs.filter(s => s.company_name.trim()).map((sub, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <HardHat className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{sub.company_name}</p>
+                        <p className="text-xs text-muted-foreground">{sub.csi_division || sub.csi_code}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-secondary/50 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Default Documents Per Sub</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {DEFAULT_DOCS.map(d => (
+                      <span key={d} className="text-xs bg-card border border-border rounded-full px-2.5 py-1 text-foreground">{d}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {error && (
+                <div className="flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-xl px-4 py-3">
+                  <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-destructive">{error}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Nav Buttons */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => step === 0 ? router.push('/dashboard') : setStep(s => s - 1)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border text-foreground rounded-xl text-sm font-medium hover:bg-secondary transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            {step === 0 ? 'Cancel' : 'Back'}
+          </button>
           {step < 2 ? (
             <button
               onClick={handleNext}
-              disabled={step === 0 && !canGoNextStep1}
-              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-xl font-semibold text-sm hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md"
+              disabled={step === 0 && !canGoNext0}
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
               Next
               <ChevronRight className="w-4 h-4" />
@@ -432,117 +343,14 @@ export default function NewProjectPage() {
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:bg-primary/90 disabled:opacity-50 transition-all shadow-md"
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
-              {isSubmitting ? (
-                <>
-                  <span className="inline-flex gap-0.5">
-                    {[0, 150, 300].map((d) => (
-                      <span
-                        key={d}
-                        className="w-1 h-1 bg-white rounded-full animate-bounce"
-                        style={{ animationDelay: `${d}ms` }}
-                      />
-                    ))}
-                  </span>
-                  Creating...
-                </>
-              ) : (
-                <>
-                  Create Project
-                  <Check className="w-4 h-4" />
-                </>
-              )}
+              {isSubmitting ? 'Creating...' : 'Create Project'}
+              <Check className="w-4 h-4" />
             </button>
           )}
         </div>
       </div>
     </AppLayout>
-  );
-}
-
-function SubcontractorRow({
-  index,
-  sub,
-  onUpdate,
-  onRemove,
-  canRemove,
-}: {
-  index: number;
-  sub: SubcontractorEntry;
-  onUpdate: (i: number, field: keyof SubcontractorEntry, value: string) => void;
-  onRemove: () => void;
-  canRemove: boolean;
-}) {
-  return (
-    <div className="p-5 rounded-2xl border border-border bg-background shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
-          Subcontractor #{index + 1}
-        </span>
-        {canRemove && (
-          <button
-            onClick={onRemove}
-            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-            aria-label="Remove subcontractor"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-            Vendor Name <span className="text-destructive">*</span>
-          </label>
-          <input
-            type="text"
-            value={sub.vendorName}
-            onChange={(e) => onUpdate(index, "vendorName", e.target.value)}
-            placeholder="e.g. Pacific HVAC Inc."
-            className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-            Vendor Code
-          </label>
-          <input
-            type="text"
-            value={sub.vendorCode}
-            onChange={(e) => onUpdate(index, "vendorCode", e.target.value)}
-            placeholder="e.g. PAHVAC"
-            className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-            CSI Division <span className="text-destructive">*</span>
-          </label>
-          <select
-            value={sub.csiCode}
-            onChange={(e) => onUpdate(index, "csiCode", e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background"
-          >
-            <option value="">Select division...</option>
-            {CSI_DIVISIONS.map((d) => (
-              <option key={d.code} value={d.code}>
-                {d.code} — {d.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-      {sub.csiCode && (
-        <div className="mt-3 pt-3 border-t border-border/60">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            <span className="font-semibold text-foreground">Required documents: </span>
-            {CSI_DIVISIONS.find((d) => d.code === sub.csiCode)
-              ?.requiredDocuments.map((d) => d.documentType)
-              .join(", ")}
-          </p>
-        </div>
-      )}
-    </div>
-  );
+  )
 }
