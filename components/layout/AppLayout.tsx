@@ -48,7 +48,7 @@ function ManagerAIPanel() {
       {
         role: "assistant",
         content:
-          "I can help with that! Based on the current project data, here's a summary: Downtown Office Renovation is at 43% completion with 3 subcontractors still missing key documents. Harbor View Condominiums is at 21% — the plumbing sub (FlowRite) has only submitted 1 of 7 required documents.",
+          "Based on the current project data: Downtown Office Renovation is at 43% — Pacific HVAC is missing Controls Sequences and Warranty. Harbor View Condominiums is at 21% — FlowRite Plumbing has only submitted 1 of 7 required documents. Westside Medical Center is 100% complete and published.",
       },
     ]);
     setIsLoading(false);
@@ -64,8 +64,8 @@ function ManagerAIPanel() {
   return (
     <div className="border-t border-border">
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-foreground hover:bg-secondary/50 transition-colors"
+        onClick={() => setIsOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-foreground hover:bg-secondary/60 transition-colors"
       >
         <div className="flex items-center gap-2">
           <Bot className="w-4 h-4 text-primary" />
@@ -82,9 +82,9 @@ function ManagerAIPanel() {
         <div className="flex flex-col" style={{ height: "320px" }}>
           <div className="flex-1 overflow-y-auto px-3 py-2 space-y-3 min-h-0">
             {messages.length === 0 && (
-              <div className="text-center py-6">
-                <Bot className="w-8 h-8 text-primary/40 mx-auto mb-2" />
-                <p className="text-xs text-muted-foreground">
+              <div className="text-center py-4">
+                <Bot className="w-8 h-8 text-primary/30 mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground leading-relaxed">
                   Ask me about your projects, subcontractors, or document status.
                 </p>
                 <div className="mt-3 space-y-1.5">
@@ -95,7 +95,7 @@ function ManagerAIPanel() {
                         setInput(suggestion);
                         textareaRef.current?.focus();
                       }}
-                      className="block w-full text-left text-xs px-2 py-1.5 rounded-md bg-secondary hover:bg-secondary/80 text-muted-foreground transition-colors"
+                      className="block w-full text-left text-xs px-2.5 py-1.5 rounded-lg bg-secondary hover:bg-secondary/80 text-muted-foreground transition-colors"
                     >
                       {suggestion}
                     </button>
@@ -175,13 +175,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-card border-b border-border">
-          <Image
-              src="/images/logo-icon.jpg"
-              alt="Closechain AI"
-              width={56}
-              height={56}
-              className="h-14 w-auto"
-            />
+        <Image
+          src="/images/logo-icon.jpg"
+          alt="Closechain AI"
+          width={44}
+          height={44}
+          className="h-11 w-auto"
+        />
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 text-muted-foreground hover:text-foreground"
@@ -191,40 +191,55 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </button>
       </div>
 
+      {/* Mobile overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/20 z-40 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:flex flex-col",
-          isMobileMenuOpen ? "translate-x-0 flex" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static",
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:flex"
         )}
       >
-        <div className="px-3 py-4 hidden md:flex items-center">
+        {/* Logo */}
+        <div className="px-3 py-3 hidden md:flex items-center border-b border-border/50">
           <Image
             src="/images/logo-sidebar.jpg"
             alt="Closechain AI"
-            width={220}
-            height={112}
-            className="h-28 w-auto -ml-4"
+            width={210}
+            height={100}
+            className="h-24 w-auto -ml-2 object-contain"
+            priority
           />
         </div>
 
-        <nav className="px-4 py-4 space-y-1">
+        {/* Nav */}
+        <nav className="px-3 py-4 space-y-0.5">
           {navItems.map((item) => {
-            const isActive = pathname?.startsWith(item.href) ?? false;
+            const isActive =
+              pathname === item.href || pathname?.startsWith(item.href + "/");
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
                   isActive
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 )}
               >
                 <item.icon
-                  className={cn("w-5 h-5", isActive ? "text-primary" : "text-muted-foreground")}
+                  className={cn(
+                    "w-5 h-5",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}
                 />
                 {item.label}
               </Link>
@@ -234,16 +249,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
         <div className="flex-1" />
 
+        {/* AI Panel */}
         <ManagerAIPanel />
 
+        {/* User Footer */}
         <div className="p-4 border-t border-border">
-          <div className="flex items-center gap-3 px-3 py-2">
+          <div className="flex items-center gap-3 px-1 py-1 mb-3">
             <Image
-              src="https://api.dicebear.com/7.x/initials/svg?seed=GC"
-              alt="User avatar"
-              width={40}
-              height={40}
-              className="w-10 h-10 rounded-full border-2 border-background shadow-sm"
+              src="https://api.dicebear.com/7.x/initials/svg?seed=JS&backgroundColor=1e3a5f&textColor=ffffff"
+              alt="John Smith"
+              width={36}
+              height={36}
+              className="w-9 h-9 rounded-full border-2 border-border"
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground truncate">John Smith</p>
@@ -252,7 +269,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
           <Link
             href="/login"
-            className="mt-4 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
           >
             <LogOut className="w-4 h-4" />
             Sign out
@@ -261,13 +278,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto bg-gray-50/50">
-        {isMobileMenuOpen && (
-          <div
-            className="fixed inset-0 bg-black/20 z-40 md:hidden"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-        )}
+      <main className="flex-1 min-w-0 overflow-auto bg-slate-50/60">
         <div className="p-4 md:p-8 max-w-7xl mx-auto">{children}</div>
       </main>
     </div>

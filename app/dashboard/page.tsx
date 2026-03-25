@@ -15,7 +15,7 @@ import {
 import { format } from "date-fns";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { MOCK_PROJECTS, type Project, type ProjectDetail } from "@/lib/mock-data";
+import { MOCK_PROJECTS, type ProjectDetail } from "@/lib/mock-data";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -27,9 +27,27 @@ export default function DashboardPage() {
   const publishedProjects = projects.filter((p) => !!p.clientPortalToken).length;
 
   const metrics = [
-    { label: "Total Projects", value: totalProjects, color: "bg-blue-50 text-blue-700", icon: FolderKanban },
-    { label: "Not Published", value: notPublishedProjects, color: "bg-amber-50 text-amber-700", icon: FolderKanban },
-    { label: "Published", value: publishedProjects, color: "bg-emerald-50 text-emerald-700", icon: FolderKanban },
+    {
+      label: "Total Projects",
+      value: totalProjects,
+      colorText: "text-blue-700",
+      colorBg: "bg-blue-50",
+      icon: FolderKanban,
+    },
+    {
+      label: "Not Published",
+      value: notPublishedProjects,
+      colorText: "text-amber-700",
+      colorBg: "bg-amber-50",
+      icon: FolderKanban,
+    },
+    {
+      label: "Published",
+      value: publishedProjects,
+      colorText: "text-emerald-700",
+      colorBg: "bg-emerald-50",
+      icon: FolderKanban,
+    },
   ];
 
   return (
@@ -37,13 +55,13 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">Projects Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 text-sm">
             Overview of all your construction closeout packages.
           </p>
         </div>
         <button
           onClick={() => router.push("/projects/new")}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium shadow-sm hover:shadow-md hover:bg-primary/90 transition-all hover:-translate-y-0.5"
+          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-xl font-semibold shadow-sm hover:shadow-md hover:bg-primary/90 transition-all hover:-translate-y-0.5 text-sm"
         >
           <Plus className="w-4 h-4" />
           New Project
@@ -51,48 +69,54 @@ export default function DashboardPage() {
       </div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
         {metrics.map((metric, i) => (
-          <div key={i} className="bg-card rounded-2xl p-6 border border-border shadow-sm">
-            <p className="text-sm font-medium text-muted-foreground">{metric.label}</p>
-            <div className="mt-2 flex items-baseline gap-3">
-              <span className="text-4xl font-display font-bold text-foreground">{metric.value}</span>
-              <div className={`p-1.5 rounded-md ${metric.color}`}>
-                <metric.icon className="w-4 h-4" />
-              </div>
+          <div
+            key={i}
+            className="bg-card rounded-2xl p-6 border border-border shadow-sm flex items-center gap-4"
+          >
+            <div className={`p-3 rounded-2xl ${metric.colorBg}`}>
+              <metric.icon className={`w-5 h-5 ${metric.colorText}`} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">{metric.label}</p>
+              <p className="text-4xl font-display font-bold text-foreground mt-0.5">
+                {metric.value}
+              </p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div className="flex shrink-0 border-b border-border mb-6">
+      <div className="flex border-b border-border mb-6 gap-1">
         <button
           onClick={() => setActiveTab("projects")}
-          className={`px-6 py-3 text-sm font-semibold transition-colors flex items-center gap-2 ${
+          className={`px-5 py-3 text-sm font-semibold transition-colors flex items-center gap-2 ${
             activeTab === "projects"
               ? "text-primary border-b-2 border-primary"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <FolderKanban className="w-4 h-4" /> Project View
+          <FolderKanban className="w-4 h-4" />
+          Project View
         </button>
         <button
           onClick={() => setActiveTab("subcontractors")}
-          className={`px-6 py-3 text-sm font-semibold transition-colors flex items-center gap-2 ${
+          className={`px-5 py-3 text-sm font-semibold transition-colors flex items-center gap-2 ${
             activeTab === "subcontractors"
               ? "text-primary border-b-2 border-primary"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <HardHat className="w-4 h-4" /> Subcontractor View
+          <HardHat className="w-4 h-4" />
+          Subcontractor View
         </button>
       </div>
 
       {activeTab === "projects" && (
         <ProjectsGridView
           projects={projects}
-          isLoading={false}
           onCreateClick={() => router.push("/projects/new")}
         />
       )}
@@ -103,38 +127,27 @@ export default function DashboardPage() {
 
 function ProjectsGridView({
   projects,
-  isLoading,
   onCreateClick,
 }: {
   projects: ProjectDetail[];
-  isLoading: boolean;
   onCreateClick: () => void;
 }) {
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-64 bg-secondary/50 animate-pulse rounded-2xl border border-border" />
-        ))}
-      </div>
-    );
-  }
-
   if (projects.length === 0) {
     return (
-      <div className="bg-card rounded-2xl border border-border p-12 text-center shadow-sm">
+      <div className="bg-card rounded-2xl border border-border p-14 text-center shadow-sm">
         <div className="mx-auto w-16 h-16 bg-secondary rounded-full flex items-center justify-center mb-4">
           <Building2 className="w-8 h-8 text-muted-foreground" />
         </div>
-        <h3 className="text-xl font-semibold text-foreground mb-2">No projects yet</h3>
-        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+        <h3 className="text-xl font-display font-semibold text-foreground mb-2">No projects yet</h3>
+        <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm">
           Get started by creating your first construction project to manage its closeout package.
         </p>
         <button
           onClick={onCreateClick}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium shadow-sm hover:bg-primary/90 transition-all"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-xl font-semibold text-sm shadow-sm hover:bg-primary/90 transition-all"
         >
-          <Plus className="w-4 h-4" /> Create Project
+          <Plus className="w-4 h-4" />
+          Create Project
         </button>
       </div>
     );
@@ -153,16 +166,17 @@ function ProjectCard({ project }: { project: ProjectDetail }) {
   return (
     <Link href={`/projects/${project.id}`}>
       <div className="group bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300 flex flex-col h-full cursor-pointer relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+        {/* Hover arrow */}
+        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5">
           <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
             }}
             title="Delete project"
-            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5" />
           </button>
           <ArrowRight className="text-primary w-5 h-5" />
         </div>
@@ -171,22 +185,23 @@ function ProjectCard({ project }: { project: ProjectDetail }) {
           <StatusBadge status={project.status} />
         </div>
 
-        <h3 className="text-xl font-display font-bold text-foreground mb-1 group-hover:text-primary transition-colors">
+        <h3 className="text-xl font-display font-bold text-foreground mb-1 group-hover:text-primary transition-colors pr-14">
           {project.name}
         </h3>
+
         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mb-1">
           {project.jobNumber && (
-            <p className="text-xs text-muted-foreground">Job Number: {project.jobNumber}</p>
+            <p className="text-xs text-muted-foreground">#{project.jobNumber}</p>
           )}
           {project.endDate && (
             <p className="text-xs text-muted-foreground">
-              End Date: {format(new Date(project.endDate), "yyyy-MM-dd")}
+              Due {format(new Date(project.endDate), "MMM d, yyyy")}
             </p>
           )}
         </div>
         <p className="text-sm text-muted-foreground mb-6 line-clamp-1">{project.clientName}</p>
 
-        <div className="mt-auto pt-6 border-t border-border/50">
+        <div className="mt-auto pt-5 border-t border-border/60">
           <div className="flex justify-between items-end mb-2">
             <div className="text-sm">
               <span className="font-semibold text-foreground">{project.uploadedDocuments}</span>
@@ -197,11 +212,13 @@ function ProjectCard({ project }: { project: ProjectDetail }) {
               </span>
               <span className="text-muted-foreground"> open</span>
             </div>
-            <span className="text-xs font-bold text-primary">{Math.round(project.progress)}%</span>
+            <span className="text-xs font-bold text-primary">
+              {Math.round(project.progress)}%
+            </span>
           </div>
           <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
             <div
-              className="h-full bg-primary transition-all duration-1000 ease-out"
+              className="h-full bg-primary transition-all duration-700 ease-out"
               style={{ width: `${Math.max(0, Math.min(100, project.progress))}%` }}
             />
           </div>
@@ -244,25 +261,26 @@ function SubcontractorAggregateView({ projects }: { projects: ProjectDetail[] })
         map[key].projects.push({ projectId: project.id, projectName: project.name });
       }
     }
-    return Object.values(map);
+    return Object.values(map).sort((a, b) => a.vendorName.localeCompare(b.vendorName));
   }, [projects]);
 
   const filtered = aggregated.filter(
     (s) =>
       s.vendorName.toLowerCase().includes(search.toLowerCase()) ||
-      s.csiCode.includes(search)
+      s.csiCode.includes(search) ||
+      s.csiDivision.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="space-y-4">
-      <div className="relative max-w-md">
+      <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           type="text"
           placeholder="Search subcontractors..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm"
+          className="w-full pl-9 pr-4 py-2.5 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm"
         />
       </div>
 
@@ -270,19 +288,19 @@ function SubcontractorAggregateView({ projects }: { projects: ProjectDetail[] })
         <table className="w-full text-left">
           <thead>
             <tr className="bg-secondary/50 border-b border-border">
-              <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Vendor
               </th>
-              <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                CSI Code
+              <th className="px-6 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">
+                CSI Division
               </th>
-              <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">
                 Projects
               </th>
-              <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Docs
               </th>
-              <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">
                 Progress
               </th>
             </tr>
@@ -298,27 +316,32 @@ function SubcontractorAggregateView({ projects }: { projects: ProjectDetail[] })
                 <tr key={idx} className="hover:bg-secondary/20 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                        <HardHat className="w-5 h-5" />
+                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                        <HardHat className="w-4 h-4" />
                       </div>
-                      <span className="font-semibold text-foreground">{sub.vendorName}</span>
+                      <div>
+                        <p className="font-semibold text-foreground text-sm">{sub.vendorName}</p>
+                        <p className="text-xs text-muted-foreground sm:hidden">
+                          CSI {sub.csiCode}
+                        </p>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-secondary text-secondary-foreground">
-                      CSI {sub.csiCode}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap items-center gap-1">
-                      <span className="text-xs font-semibold text-foreground mr-1">
-                        {sub.projects.length}
+                  <td className="px-6 py-4 hidden sm:table-cell">
+                    <div>
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-secondary text-secondary-foreground">
+                        {sub.csiCode}
                       </span>
+                      <p className="text-xs text-muted-foreground mt-1">{sub.csiDivision}</p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 hidden md:table-cell">
+                    <div className="flex flex-wrap gap-1.5">
                       {sub.projects.map((p, pi) => (
                         <Link
                           key={pi}
                           href={`/projects/${p.projectId}`}
-                          className="text-xs text-primary hover:underline cursor-pointer bg-primary/5 px-2 py-1 rounded"
+                          className="text-xs text-primary hover:underline bg-primary/5 hover:bg-primary/10 px-2 py-1 rounded-lg transition-colors"
                         >
                           {p.projectName}
                         </Link>
@@ -328,21 +351,21 @@ function SubcontractorAggregateView({ projects }: { projects: ProjectDetail[] })
                   <td className="px-6 py-4">
                     <div className="text-sm">
                       <span className="font-semibold text-foreground">{sub.uploadedDocuments}</span>
-                      <span className="text-muted-foreground"> received</span>
+                      <span className="text-muted-foreground"> rcv</span>
                       <span className="text-muted-foreground mx-1">/</span>
                       <span className="font-semibold text-foreground">{openDocs}</span>
                       <span className="text-muted-foreground"> open</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden max-w-[100px]">
+                  <td className="px-6 py-4 hidden sm:table-cell">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-20 h-1.5 bg-secondary rounded-full overflow-hidden">
                         <div
                           className="h-full bg-primary transition-all"
                           style={{ width: `${progress}%` }}
                         />
                       </div>
-                      <span className="text-xs font-bold">{progress}%</span>
+                      <span className="text-xs font-bold text-foreground">{progress}%</span>
                     </div>
                   </td>
                 </tr>
@@ -350,8 +373,11 @@ function SubcontractorAggregateView({ projects }: { projects: ProjectDetail[] })
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground text-sm">
-                  No subcontractors found.
+                <td
+                  colSpan={5}
+                  className="px-6 py-14 text-center text-muted-foreground text-sm"
+                >
+                  No subcontractors found matching your search.
                 </td>
               </tr>
             )}

@@ -22,39 +22,39 @@ import {
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import {
-  MOCK_PROJECTS,
-  MOCK_DOCUMENTS,
-  type DocumentSlot,
-  type DocumentStatus,
-} from "@/lib/mock-data";
+import { MOCK_PROJECTS, MOCK_DOCUMENTS, type DocumentSlot, type DocumentStatus } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 type Tab = "all" | "not_submitted" | "uploaded" | "approved";
 type ViewMode = "by_sub" | "by_section";
 
-export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ProjectDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const projectId = parseInt(id, 10);
   const project = MOCK_PROJECTS.find((p) => p.id === projectId);
 
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("by_sub");
-  const [expandedSubs, setExpandedSubs] = useState<Set<number>>(new Set([1, 2]));
+  const [expandedSubs, setExpandedSubs] = useState<Set<number>>(new Set([1, 2, 7, 12]));
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [aiInput, setAIInput] = useState("");
-  const [aiMessages, setAIMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [aiMessages, setAIMessages] = useState<
+    { role: "user" | "assistant"; content: string }[]
+  >([]);
   const [isAILoading, setIsAILoading] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showPortalLinkCopied, setShowPortalLinkCopied] = useState(false);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
-  // Documents for this project
   const projectSubIds = new Set(project?.subcontractors.map((s) => s.id) ?? []);
   const rawDocuments = MOCK_DOCUMENTS.filter((d) => projectSubIds.has(d.subcontractorId));
 
-  const tabs: { key: Tab; label: string; count?: number }[] = [
+  const tabs: { key: Tab; label: string; count: number }[] = [
     { key: "all", label: "All Documents", count: rawDocuments.length },
     {
       key: "not_submitted",
@@ -107,11 +107,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     return Object.entries(map).map(([section, docs]) => ({ section, docs }));
   }, [filteredDocs]);
 
-  const toggleSub = (id: number) => {
+  const toggleSub = (subId: number) => {
     setExpandedSubs((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(subId)) next.delete(subId);
+      else next.add(subId);
       return next;
     });
   };
@@ -136,7 +136,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       ...prev,
       {
         role: "assistant",
-        content: `For ${project?.name ?? "this project"}, I can see that the following items still need attention: Pacific HVAC is missing Controls Sequences and the Warranty Certificate. Bay Electrical has 3 open documents including the O&M Manual and Test Reports. I recommend sending a reminder to both subcontractors.`,
+        content: `For ${project?.name ?? "this project"}: Pacific HVAC is missing Controls Sequences and Warranty Certificate. Bay Electrical has 3 open documents — O&M Manual, Test Reports, and Warranty. I recommend sending reminders to both subcontractors this week.`,
       },
     ]);
     setIsAILoading(false);
@@ -144,7 +144,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   };
 
   const copyPortalLink = () => {
-    const url = `${window.location.origin}/portal/${project?.clientPortalToken ?? "demo-token"}`;
+    if (typeof window === "undefined") return;
+    const url = `${window.location.origin}/portal/${project?.clientPortalToken ?? "demo-token-abc123"}`;
     navigator.clipboard.writeText(url).then(() => {
       setShowPortalLinkCopied(true);
       setTimeout(() => setShowPortalLinkCopied(false), 2000);
@@ -156,8 +157,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       <AppLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-foreground mb-2">Project not found</h2>
-            <Link href="/dashboard" className="text-primary hover:underline">
+            <h2 className="text-xl font-display font-semibold text-foreground mb-2">
+              Project not found
+            </h2>
+            <Link href="/dashboard" className="text-primary hover:underline text-sm">
               Back to Dashboard
             </Link>
           </div>
@@ -171,32 +174,31 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   return (
     <AppLayout>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8">
         <div>
           <Link
             href="/dashboard"
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-2 transition-colors w-fit"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
             Dashboard
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-3xl font-display font-bold text-foreground">{project.name}</h1>
             <StatusBadge status={project.status} />
           </div>
-          <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-            {project.jobNumber && <span>#{project.jobNumber}</span>}
-            {project.clientName && (
-              <>
-                <span className="text-border">|</span>
-                <span>{project.clientName}</span>
-              </>
+          <div className="flex items-center gap-2 mt-1.5 text-sm text-muted-foreground flex-wrap">
+            {project.jobNumber && (
+              <span className="font-mono text-xs bg-secondary px-2 py-0.5 rounded-md">
+                #{project.jobNumber}
+              </span>
             )}
+            {project.clientName && <span>{project.clientName}</span>}
             {project.endDate && (
               <>
-                <span className="text-border">|</span>
+                <span className="text-border">•</span>
                 <span>
-                  End Date:{" "}
+                  Due{" "}
                   {new Date(project.endDate).toLocaleDateString("en-US", {
                     year: "numeric",
                     month: "short",
@@ -209,9 +211,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => setShowAIPanel(!showAIPanel)}
+            onClick={() => setShowAIPanel((v) => !v)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all",
+              "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all",
               showAIPanel
                 ? "bg-primary text-primary-foreground border-primary"
                 : "border-border text-foreground hover:bg-secondary"
@@ -224,16 +226,15 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             <div className="flex items-center gap-2">
               <Link
                 href={portalUrl}
-                target="_blank"
-                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm"
+                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm"
               >
                 <Globe className="w-4 h-4" />
                 Client Portal
               </Link>
               <button
                 onClick={copyPortalLink}
-                className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border border-border hover:bg-secondary transition-colors"
                 title="Copy portal link"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold border border-border hover:bg-secondary transition-colors"
               >
                 {showPortalLinkCopied ? (
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -245,7 +246,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           ) : (
             <button
               onClick={() => setShowPublishModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm"
             >
               <Globe className="w-4 h-4" />
               Publish to Client
@@ -254,28 +255,28 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      {/* Progress */}
+      {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {[
           {
             icon: AlertCircle,
             label: "Open",
             value: project.totalDocuments - project.uploadedDocuments,
-            color: "text-amber-500",
+            iconColor: "text-amber-500",
             bg: "bg-amber-50",
           },
           {
             icon: Clock,
             label: "Pending Review",
             value: project.uploadedDocuments - project.approvedDocuments,
-            color: "text-blue-500",
+            iconColor: "text-blue-500",
             bg: "bg-blue-50",
           },
           {
             icon: CheckCircle2,
             label: "Approved",
             value: project.approvedDocuments,
-            color: "text-emerald-500",
+            iconColor: "text-emerald-500",
             bg: "bg-emerald-50",
           },
         ].map((stat, i) => (
@@ -283,8 +284,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             key={i}
             className="bg-card border border-border rounded-2xl p-5 shadow-sm flex items-center gap-4"
           >
-            <div className={`p-3 rounded-xl ${stat.bg}`}>
-              <stat.icon className={`w-5 h-5 ${stat.color}`} />
+            <div className={`p-3 rounded-2xl ${stat.bg}`}>
+              <stat.icon className={`w-5 h-5 ${stat.iconColor}`} />
             </div>
             <div>
               <p className="text-3xl font-display font-bold text-foreground">{stat.value}</p>
@@ -296,51 +297,46 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
       {/* AI Panel */}
       {showAIPanel && (
-        <div className="mb-8 bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+        <div className="mb-8 bg-card border border-border rounded-2xl shadow-sm overflow-hidden animate-fade-in">
           <div className="px-6 py-4 border-b border-border bg-secondary/30 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Bot className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold text-foreground">Closechain AI Assistant</h3>
+              <h3 className="font-display font-bold text-foreground">Closechain AI Assistant</h3>
             </div>
             <button
               onClick={() => setShowAIPanel(false)}
-              className="text-muted-foreground hover:text-foreground text-sm"
+              className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
             >
               Close
             </button>
           </div>
           <div className="flex flex-col" style={{ height: "280px" }}>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
+            <div className="flex-1 overflow-y-auto p-5 space-y-3 min-h-0">
               {aiMessages.length === 0 && (
-                <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground">
-                    Ask me anything about this project — missing documents, subcontractor status, or
-                    next steps.
+                <div className="text-center py-6">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Ask me anything about this project — missing documents, subcontractor status,
+                    or next steps.
                   </p>
-                  <div className="mt-3 flex flex-wrap justify-center gap-2">
-                    {[
-                      "What's missing?",
-                      "Which subs haven't submitted?",
-                      "Ready for client?",
-                    ].map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setAIInput(s)}
-                        className="text-xs px-3 py-1.5 rounded-full border border-border hover:bg-secondary transition-colors"
-                      >
-                        {s}
-                      </button>
-                    ))}
+                  <div className="mt-4 flex flex-wrap justify-center gap-2">
+                    {["What's missing?", "Which subs haven't submitted?", "Ready for client?"].map(
+                      (s) => (
+                        <button
+                          key={s}
+                          onClick={() => setAIInput(s)}
+                          className="text-xs px-3 py-1.5 rounded-full border border-border hover:bg-secondary transition-colors"
+                        >
+                          {s}
+                        </button>
+                      )
+                    )}
                   </div>
                 </div>
               )}
               {aiMessages.map((msg, i) => (
                 <div
                   key={i}
-                  className={cn(
-                    "flex",
-                    msg.role === "user" ? "justify-end" : "justify-start"
-                  )}
+                  className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}
                 >
                   <div
                     className={cn(
@@ -378,12 +374,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 onChange={(e) => setAIInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAISend()}
                 placeholder="Ask about this project..."
-                className="flex-1 px-3 py-2 text-sm rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background"
+                className="flex-1 px-3 py-2 text-sm rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background"
               />
               <button
                 onClick={handleAISend}
                 disabled={!aiInput.trim() || isAILoading}
-                className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-40 transition-colors"
+                className="px-3 py-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 disabled:opacity-40 transition-colors"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -392,33 +388,31 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-        <div className="flex border-b border-border flex-wrap">
+      {/* Tabs + View Toggle */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+        <div className="flex border-b border-border flex-wrap gap-0">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={cn(
-                "px-5 py-3 text-sm font-medium flex items-center gap-2 transition-colors",
+                "px-4 py-3 text-sm font-semibold flex items-center gap-2 transition-colors whitespace-nowrap",
                 activeTab === tab.key
                   ? "text-primary border-b-2 border-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
               {tab.label}
-              {tab.count !== undefined && (
-                <span
-                  className={cn(
-                    "inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
-                    activeTab === tab.key
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground"
-                  )}
-                >
-                  {tab.count}
-                </span>
-              )}
+              <span
+                className={cn(
+                  "inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
+                  activeTab === tab.key
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground"
+                )}
+              >
+                {tab.count}
+              </span>
             </button>
           ))}
         </div>
@@ -426,7 +420,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           <button
             onClick={() => setViewMode("by_sub")}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors",
               viewMode === "by_sub"
                 ? "bg-primary text-primary-foreground border-primary"
                 : "border-border text-muted-foreground hover:bg-secondary"
@@ -438,7 +432,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           <button
             onClick={() => setViewMode("by_section")}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors",
               viewMode === "by_section"
                 ? "bg-primary text-primary-foreground border-primary"
                 : "border-border text-muted-foreground hover:bg-secondary"
@@ -450,12 +444,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      {/* Document List */}
+      {/* Document Lists */}
       {viewMode === "by_sub" && (
         <div className="space-y-4">
           {docsBySub.length === 0 && (
-            <div className="bg-card border border-border rounded-2xl p-12 text-center text-muted-foreground">
-              No documents match the selected filter.
+            <div className="bg-card border border-border rounded-2xl p-14 text-center text-muted-foreground text-sm">
+              No documents match this filter.
             </div>
           )}
           {docsBySub.map((group) => (
@@ -472,8 +466,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       {viewMode === "by_section" && (
         <div className="space-y-4">
           {docsBySection.length === 0 && (
-            <div className="bg-card border border-border rounded-2xl p-12 text-center text-muted-foreground">
-              No documents match the selected filter.
+            <div className="bg-card border border-border rounded-2xl p-14 text-center text-muted-foreground text-sm">
+              No documents match this filter.
             </div>
           )}
           {docsBySection.map(({ section, docs }) => (
@@ -495,7 +489,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setShowPublishModal(false)}
           />
-          <div className="relative bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md p-8">
+          <div className="relative bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md p-8 animate-fade-in">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2.5 bg-emerald-50 rounded-xl">
                 <Globe className="w-5 h-5 text-emerald-600" />
@@ -504,30 +498,30 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 Publish to Client Portal
               </h3>
             </div>
-            <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+            <p className="text-muted-foreground text-sm leading-relaxed mb-5">
               This will create a shareable client portal link for{" "}
-              <strong>{project.name}</strong>. Your client can view all approved documents from
-              this secure link.
+              <strong className="text-foreground">{project.name}</strong>. Your client can view
+              all approved documents from this secure link.
             </p>
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex gap-3 mb-6">
+            <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex gap-3 mb-6">
               <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-700">
+              <p className="text-xs text-amber-700 leading-relaxed">
                 {project.approvedDocuments} of {project.totalDocuments} documents are approved.
-                You can still publish with pending documents — they will show as &quot;Pending Review&quot;
+                You can still publish — pending documents will show as &quot;Pending Review&quot;
                 in the portal.
               </p>
             </div>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowPublishModal(false)}
-                className="flex-1 px-4 py-2.5 border border-border rounded-xl text-sm font-medium hover:bg-secondary transition-colors"
+                className="flex-1 px-4 py-2.5 border border-border rounded-xl text-sm font-semibold hover:bg-secondary transition-colors"
               >
                 Cancel
               </button>
               <Link
-                href={`/portal/demo-token-abc123`}
+                href="/portal/demo-token-abc123"
                 onClick={() => setShowPublishModal(false)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors"
               >
                 <Globe className="w-4 h-4" />
                 Publish
@@ -543,25 +537,26 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 function DocStatusIcon({ status }: { status: DocumentStatus }) {
   if (status === "approved")
     return <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />;
-  if (status === "uploaded") return <Clock className="w-4 h-4 text-amber-500 flex-shrink-0" />;
+  if (status === "uploaded")
+    return <Clock className="w-4 h-4 text-amber-500 flex-shrink-0" />;
   return <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />;
 }
 
 function DocumentRow({ doc }: { doc: DocumentSlot }) {
   return (
-    <div className="flex items-center gap-4 px-5 py-3 hover:bg-secondary/20 transition-colors group">
+    <div className="flex items-center gap-4 px-5 py-3.5 hover:bg-secondary/20 transition-colors group">
       <DocStatusIcon status={doc.status} />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-foreground truncate">
           {doc.documentType}
           {doc.parentDocumentType && (
-            <span className="text-xs text-muted-foreground ml-1">
+            <span className="text-xs text-muted-foreground ml-1.5">
               ({doc.parentDocumentType})
             </span>
           )}
         </p>
         {doc.packageSection && (
-          <p className="text-xs text-muted-foreground">{doc.packageSection}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{doc.packageSection}</p>
         )}
       </div>
 
@@ -571,16 +566,16 @@ function DocumentRow({ doc }: { doc: DocumentSlot }) {
         </span>
       )}
 
-      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
         {doc.status === "not_submitted" && (
-          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors">
+          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-semibold hover:bg-primary/90 transition-colors">
             <Upload className="w-3 h-3" />
             Upload
           </button>
         )}
         {doc.status === "uploaded" && (
           <>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition-colors">
+            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors">
               <CheckCircle2 className="w-3 h-3" />
               Approve
             </button>
@@ -614,6 +609,8 @@ function SubcontractorDocGroup({
   const approved = group.docs.filter((d) => d.status === "approved").length;
   const uploaded = group.docs.filter((d) => d.status === "uploaded").length;
   const notSubmitted = group.docs.filter((d) => d.status === "not_submitted").length;
+  const progress =
+    group.docs.length > 0 ? Math.round((approved / group.docs.length) * 100) : 0;
 
   return (
     <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
@@ -621,32 +618,38 @@ function SubcontractorDocGroup({
         onClick={onToggle}
         className="w-full flex items-center gap-4 px-6 py-4 hover:bg-secondary/30 transition-colors"
       >
-        <div className="p-2 bg-primary/10 rounded-lg">
+        <div className="p-2 bg-primary/10 rounded-xl">
           <HardHat className="w-4 h-4 text-primary" />
         </div>
-        <div className="flex-1 text-left">
-          <p className="font-semibold text-foreground">{group.vendorName}</p>
-          <p className="text-xs text-muted-foreground">CSI {group.csiCode}</p>
+        <div className="flex-1 text-left min-w-0">
+          <p className="font-semibold text-foreground text-sm truncate">{group.vendorName}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">CSI {group.csiCode}</p>
         </div>
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex items-center gap-3 text-xs flex-wrap">
           {notSubmitted > 0 && (
-            <span className="flex items-center gap-1 text-gray-500">
+            <span className="flex items-center gap-1 text-gray-500 whitespace-nowrap">
               <AlertCircle className="w-3.5 h-3.5" />
               {notSubmitted} open
             </span>
           )}
           {uploaded > 0 && (
-            <span className="flex items-center gap-1 text-amber-600">
+            <span className="flex items-center gap-1 text-amber-600 whitespace-nowrap">
               <Clock className="w-3.5 h-3.5" />
               {uploaded} pending
             </span>
           )}
           {approved > 0 && (
-            <span className="flex items-center gap-1 text-emerald-600">
+            <span className="flex items-center gap-1 text-emerald-600 whitespace-nowrap">
               <CheckCircle2 className="w-3.5 h-3.5" />
               {approved} approved
             </span>
           )}
+          <div className="flex items-center gap-2 hidden sm:flex">
+            <div className="w-16 h-1.5 bg-secondary rounded-full overflow-hidden">
+              <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
+            </div>
+            <span className="text-xs font-bold">{progress}%</span>
+          </div>
         </div>
         {isExpanded ? (
           <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -686,14 +689,14 @@ function SectionDocGroup({
         onClick={onToggle}
         className="w-full flex items-center gap-4 px-6 py-4 hover:bg-secondary/30 transition-colors"
       >
-        <div className="p-2 bg-secondary rounded-lg">
+        <div className="p-2 bg-secondary rounded-xl">
           <FileText className="w-4 h-4 text-muted-foreground" />
         </div>
         <div className="flex-1 text-left">
-          <p className="font-semibold text-foreground">{section}</p>
-          <p className="text-xs text-muted-foreground">{docs.length} documents</p>
+          <p className="font-semibold text-foreground text-sm">{section}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{docs.length} documents</p>
         </div>
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex items-center gap-3 text-xs flex-wrap">
           {notSubmitted > 0 && (
             <span className="flex items-center gap-1 text-gray-500">
               <AlertCircle className="w-3.5 h-3.5" />

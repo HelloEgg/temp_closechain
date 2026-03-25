@@ -5,11 +5,13 @@ import "./globals.css";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
 });
 
 const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-outfit",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -18,16 +20,10 @@ export const metadata: Metadata = {
     "Stop Searching. Just Ask. AI-powered construction closeout package management for general contractors.",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${outfit.variable} font-sans antialiased`}>
-        {children}
-      </body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} ${outfit.variable}`}>{children}</body>
     </html>
   );
 }

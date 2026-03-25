@@ -1,12 +1,10 @@
-"use client";
-
 import { CheckCircle2, Clock, AlertCircle, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Status = "not_submitted" | "uploaded" | "approved" | "active" | "archived";
 
 const variantMap: Record<Status, string> = {
-  not_submitted: "bg-gray-100 text-gray-700 border border-gray-200",
+  not_submitted: "bg-gray-100 text-gray-600 border border-gray-200",
   uploaded: "bg-amber-50 text-amber-700 border border-amber-200",
   approved: "bg-emerald-50 text-emerald-700 border border-emerald-200",
   active: "bg-blue-50 text-blue-700 border border-blue-200",
